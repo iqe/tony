@@ -63,7 +63,7 @@ func (a *Authenticator) Authenticate(request *Request) (*Response, error) {
 	authenticated := a.authHandler(request.AuthUser, request.AuthPass)
 
 	if authenticated {
-		a.resetDelay(request.AuthUser)
+		a.resetDelay(request.ClientIP)
 		return &Response{
 			AuthStatus: "OK",
 			AuthServer: a.authServer,
@@ -71,8 +71,7 @@ func (a *Authenticator) Authenticate(request *Request) (*Response, error) {
 		}, nil
 	}
 
-	delay := a.calculateDelay(request.AuthUser)
-	delay = a.calculateDelay(request.ClientIP)
+	delay := a.updateDelay(request.ClientIP)
 
 	return &Response{
 		AuthStatus: "Invalid username or password",
@@ -80,7 +79,7 @@ func (a *Authenticator) Authenticate(request *Request) (*Response, error) {
 	}, nil
 }
 
-func (a *Authenticator) calculateDelay(key string) int {
+func (a *Authenticator) updateDelay(key string) int {
 	delay := a.baseDelay
 
 	res, err := a.delayCache.Value(key)
