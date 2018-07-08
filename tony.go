@@ -2,6 +2,7 @@ package tony
 
 import (
 	"fmt"
+	"math"
 	"sync/atomic"
 	"time"
 
@@ -46,6 +47,7 @@ type Authenticator struct {
 	authHandler authHandler
 	delayCache  *cache2go.CacheTable
 	baseDelay   int
+	maxDelay    int
 }
 
 type authHandler (func(username string, password string) bool)
@@ -56,7 +58,14 @@ func NewAuthenticator(authServer string, authPort int, authHandler authHandler) 
 	atomic.AddUint64(&cacheNameCounter, 1)
 	cache := cache2go.Cache(fmt.Sprintf("delayCache-%v", cacheNameCounter))
 
-	return &Authenticator{authServer: authServer, authPort: authPort, authHandler: authHandler, delayCache: cache, baseDelay: 2}
+	return &Authenticator{
+		authServer:  authServer,
+		authPort:    authPort,
+		authHandler: authHandler,
+		delayCache:  cache,
+		baseDelay:   2,
+		maxDelay:    16,
+	}
 }
 
 func (a *Authenticator) Authenticate(request *Request) (*Response, error) {
@@ -87,7 +96,8 @@ func (a *Authenticator) updateDelay(key string) int {
 		delay = res.Data().(int)
 	}
 
-	a.delayCache.Add(key, 60*time.Second, delay*2)
+	newDelay := int(math.Min(float64(delay*2), float64(a.maxDelay)))
+	a.delayCache.Add(key, 60*time.Second, newDelay)
 
 	return delay
 }

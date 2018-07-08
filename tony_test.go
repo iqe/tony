@@ -69,6 +69,25 @@ func TestDelayShouldOnlyAffectOneClientIP(t *testing.T) {
 		res("Invalid username or password", 2, "", 0))
 }
 
+func TestMaxDelayIsCapped(t *testing.T) {
+	// given
+	h := func(u string, p string) bool {
+		return p == "valid-pass"
+	}
+
+	a := NewAuthenticator("www.example.com", 143, h)
+
+	// when
+	for i := 0; i < 20; i++ {
+		auth(t, a, req(Plain, "user", "invalid-pass", IMAP, "192.168.0.1"))
+	}
+
+	// then
+	test(t, a,
+		req(Plain, "user", "invalid-pass", IMAP, "192.168.0.1"),
+		res("Invalid username or password", 16, "", 0))
+}
+
 func TestEachAuthenticatorUsesItsOwnCache(t *testing.T) {
 	// given
 	h := func(u string, p string) bool {
@@ -88,9 +107,6 @@ func TestEachAuthenticatorUsesItsOwnCache(t *testing.T) {
 		res("Invalid username or password", 2, "", 0))
 }
 
-// TODO Max delay caps delay time
-// TODO Client-IP-based delay
-// TODO client-Ip + username delay uses min(client, username)
 // TODO different backend servers
 
 func test(t *testing.T, authenticator *Authenticator, request Request, expected Response) {
