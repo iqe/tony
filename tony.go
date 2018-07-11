@@ -49,7 +49,7 @@ type Authenticator struct {
 }
 
 type authHandler interface {
-	Authenticate(Request) (Response, error)
+	Authenticate(Request) Response
 }
 
 var cacheNameCounter uint64
@@ -66,10 +66,10 @@ func NewAuthenticator(authHandlers []authHandler) *Authenticator {
 	}
 }
 
-func (a *Authenticator) Authenticate(request Request) (Response, error) {
+func (a *Authenticator) Authenticate(request Request) Response {
 	var response Response
 	for _, authHandler := range a.authHandlers {
-		response, _ = authHandler.Authenticate(request) // TODO use error for logging
+		response = authHandler.Authenticate(request)
 		if response.AuthStatus == "OK" {
 			break
 		}
@@ -83,7 +83,7 @@ func (a *Authenticator) Authenticate(request Request) (Response, error) {
 		response.AuthWait = delay
 	}
 
-	return response, nil
+	return response
 }
 
 func (a *Authenticator) updateDelay(key string) int {

@@ -1,7 +1,6 @@
 package tony
 
 import (
-	"errors"
 	"testing"
 )
 
@@ -10,23 +9,18 @@ type testAuthHandler struct {
 	server        string
 	port          int
 	failureStatus string
-	triggerError  bool
 }
 
-func (h *testAuthHandler) Authenticate(r Request) (Response, error) {
-	if h.triggerError {
-		return Response{}, errors.New("An error occured")
-	}
-
+func (h *testAuthHandler) Authenticate(r Request) Response {
 	if r.AuthPass == h.validPass {
 		return Response{
 			AuthStatus: "OK",
 			AuthServer: h.server,
 			AuthPort:   h.port,
-		}, nil
+		}
 	}
 
-	return Response{AuthStatus: h.failureStatus}, nil
+	return Response{AuthStatus: h.failureStatus}
 }
 
 func newTestAuthHandler(validPass string, server string, port int) *testAuthHandler {
@@ -123,6 +117,7 @@ func TestEachAuthenticatorUsesItsOwnCache(t *testing.T) {
 	auth(t, a, req(Plain, "user", "invalid-pass", IMAP, "192.168.0.1"))
 	auth(t, a, req(Plain, "user", "invalid-pass", IMAP, "192.168.0.1"))
 
+	// delay from a does not affect b
 	test(t, b,
 		req(Plain, "user", "invalid-pass", IMAP, "192.168.0.1"),
 		res("Invalid username or password", 2, "", 0))
@@ -161,50 +156,6 @@ func TestMultipleAuthHandlers(t *testing.T) {
 		res("Invalid username or password", 2, "", 0))
 }
 
-func TestShouldGracefullyHandleErrors(t *testing.T) {
-	// given
-	h1 := newTestAuthHandler("valid-pass1", "server1", 1143)
-	h2 := newTestAuthHandler("valid-pass2", "server2", 2143)
-	a := NewAuthenticator([]authHandler{h1, h2})
-
-	// when, then
-
-	// error in h1, valid pass for h2
-	h1.triggerError = true
-	h2.triggerError = false
-	test(t, a,
-		req(Plain, "user", "valid-pass2", IMAP, "192.168.0.1"),
-		res("OK", 0, "server2", 2143))
-
-	// error in h1, invalid pass in h2
-	h1.triggerError = true
-	h2.triggerError = false
-	test(t, a,
-		req(Plain, "user", "valid-pass1", IMAP, "192.168.0.1"),
-		res("Invalid username or password", 2, "", 0))
-
-	// valid pass for h1, error in h2
-	h1.triggerError = false
-	h2.triggerError = true
-	test(t, a,
-		req(Plain, "user", "valid-pass1", IMAP, "192.168.0.1"),
-		res("OK", 0, "server1", 1143))
-
-	// invalid pass for h1, error in h2
-	h1.triggerError = false
-	h2.triggerError = true
-	test(t, a,
-		req(Plain, "user", "valid-pass2", IMAP, "192.168.0.1"),
-		res("Invalid username or password", 2, "", 0))
-
-	// error in h1, error in h2
-	h1.triggerError = true
-	h2.triggerError = true
-	test(t, a,
-		req(Plain, "user", "valid-pass1", IMAP, "192.168.0.1"),
-		res("Invalid username or password", 4, "", 0))
-}
-
 func test(t *testing.T, authenticator *Authenticator, request Request, expected Response) {
 	response := auth(t, authenticator, request)
 
@@ -224,11 +175,7 @@ func req(method Method, user string, pass string, protocol Protocol, clientIP st
 }
 
 func auth(t *testing.T, authenticator *Authenticator, request Request) Response {
-	response, err := authenticator.Authenticate(request)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return response
+	return authenticator.Authenticate(request)
 }
 
 func res(status string, wait int, server string, port int) Response {
