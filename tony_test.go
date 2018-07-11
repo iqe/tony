@@ -16,7 +16,7 @@ func TestAuthentication(t *testing.T) {
 		return &Response{AuthStatus: "Invalid username or password"}
 	}
 
-	a := NewAuthenticator(h)
+	a := NewAuthenticator([]authHandler{h})
 
 	// when, then
 	test(t, a,
@@ -42,7 +42,7 @@ func TestClientIPDelay(t *testing.T) {
 		return &Response{AuthStatus: "Invalid username or password"}
 	}
 
-	a := NewAuthenticator(h)
+	a := NewAuthenticator([]authHandler{h})
 
 	// when, then
 	test(t, a,
@@ -79,7 +79,7 @@ func TestDelayShouldOnlyAffectOneClientIP(t *testing.T) {
 		return &Response{AuthStatus: "Invalid username or password"}
 	}
 
-	a := NewAuthenticator(h)
+	a := NewAuthenticator([]authHandler{h})
 
 	// when
 	test(t, a,
@@ -107,7 +107,7 @@ func TestMaxDelayIsCapped(t *testing.T) {
 		return &Response{AuthStatus: "Invalid username or password"}
 	}
 
-	a := NewAuthenticator(h)
+	a := NewAuthenticator([]authHandler{h})
 
 	// when
 	for i := 0; i < 20; i++ {
@@ -134,8 +134,8 @@ func TestEachAuthenticatorUsesItsOwnCache(t *testing.T) {
 		return &Response{AuthStatus: "Invalid username or password"}
 	}
 
-	a := NewAuthenticator(h)
-	b := NewAuthenticator(h)
+	a := NewAuthenticator([]authHandler{h})
+	b := NewAuthenticator([]authHandler{h})
 
 	// when
 	auth(t, a, req(Plain, "user", "invalid-pass", IMAP, "192.168.0.1"))
@@ -145,6 +145,45 @@ func TestEachAuthenticatorUsesItsOwnCache(t *testing.T) {
 	test(t, b,
 		req(Plain, "user", "invalid-pass", IMAP, "192.168.0.1"),
 		res("Invalid username or password", 2, "", 0))
+}
+
+func TestMultipleAuthHandlers(t *testing.T) {
+	// given
+	h1 := func(r *Request) *Response {
+		if r.AuthPass == "valid-pass1" {
+			return &Response{
+				AuthStatus: "OK",
+				AuthServer: "www.example1.com",
+				AuthPort:   1143,
+			}
+		}
+
+		return &Response{AuthStatus: "Invalid username or password 1"}
+	}
+
+	h2 := func(r *Request) *Response {
+		if r.AuthPass == "valid-pass2" {
+			return &Response{
+				AuthStatus: "OK",
+				AuthServer: "www.example2.com",
+				AuthPort:   2143,
+			}
+		}
+
+		return &Response{AuthStatus: "Invalid username or password 2"}
+	}
+
+	// when
+	a := NewAuthenticator([]authHandler{h1, h2})
+
+	// then
+	test(t, a,
+		req(Plain, "user", "valid-pass1", IMAP, "192.168.0.1"),
+		res("OK", 0, "www.example1.com", 1143))
+
+	test(t, a,
+		req(Plain, "user", "valid-pass2", IMAP, "192.168.0.1"),
+		res("OK", 0, "www.example2.com", 2143))
 }
 
 // TODO different backend servers

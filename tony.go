@@ -42,30 +42,36 @@ type Response struct {
 }
 
 type Authenticator struct {
-	authHandler authHandler
-	delayCache  *cache2go.CacheTable
-	baseDelay   int
-	maxDelay    int
+	authHandlers []authHandler
+	delayCache   *cache2go.CacheTable
+	baseDelay    int
+	maxDelay     int
 }
 
 type authHandler (func(request *Request) *Response)
 
 var cacheNameCounter uint64
 
-func NewAuthenticator(authHandler authHandler) *Authenticator {
+func NewAuthenticator(authHandlers []authHandler) *Authenticator {
 	atomic.AddUint64(&cacheNameCounter, 1)
 	cache := cache2go.Cache(fmt.Sprintf("delayCache-%v", cacheNameCounter))
 
 	return &Authenticator{
-		authHandler: authHandler,
-		delayCache:  cache,
-		baseDelay:   2,
-		maxDelay:    16,
+		authHandlers: authHandlers,
+		delayCache:   cache,
+		baseDelay:    2,
+		maxDelay:     16,
 	}
 }
 
 func (a *Authenticator) Authenticate(request *Request) (*Response, error) {
-	response := a.authHandler(request)
+	var response *Response
+	for _, authHandler := range a.authHandlers {
+		response = authHandler(request)
+		if response.AuthStatus == "OK" {
+			break
+		}
+	}
 
 	if response.AuthStatus == "OK" {
 		a.resetDelay(request.ClientIP)
