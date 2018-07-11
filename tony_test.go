@@ -9,16 +9,16 @@ type testAuthHandler struct {
 	failureStatus string
 }
 
-func (h *testAuthHandler) authenticate(r *Request) *Response {
+func (h *testAuthHandler) authenticate(r *Request) (*Response, error) {
 	if r.AuthPass == h.validPass {
 		return &Response{
 			AuthStatus: "OK",
 			AuthServer: h.server,
 			AuthPort:   h.port,
-		}
+		}, nil
 	}
 
-	return &Response{AuthStatus: h.failureStatus}
+	return &Response{AuthStatus: h.failureStatus}, nil
 }
 
 func newTestAuthHandler(validPass string, server string, port int) authHandler {
