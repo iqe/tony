@@ -45,7 +45,7 @@ type authHandler interface {
 	Authenticate(Request) Response
 }
 
-type Authenticator struct {
+type Tony struct {
 	authHandler authHandler
 }
 
@@ -62,11 +62,11 @@ type Throttler struct {
 
 var cacheNameCounter uint64
 
-func NewAuthenticator(authHandlers []authHandler) *Authenticator {
+func New(authHandlers []authHandler) *Tony {
 	atomic.AddUint64(&cacheNameCounter, 1)
 	cache := cache2go.Cache(fmt.Sprintf("delayCache-%v", cacheNameCounter))
 
-	return &Authenticator{
+	return &Tony{
 		authHandler: &Throttler{
 			authHandler: &AuthenticatorInternal{
 				authHandlers: authHandlers,
@@ -78,8 +78,8 @@ func NewAuthenticator(authHandlers []authHandler) *Authenticator {
 	}
 }
 
-func (a *Authenticator) Authenticate(request Request) Response {
-	return a.authHandler.Authenticate(request)
+func (t *Tony) Authenticate(request Request) Response {
+	return t.authHandler.Authenticate(request)
 }
 
 func (a *AuthenticatorInternal) Authenticate(request Request) Response {

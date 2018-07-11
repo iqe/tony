@@ -35,14 +35,14 @@ func newTestAuthHandler(validPass string, server string, port int) *testAuthHand
 func TestAuthentication(t *testing.T) {
 	// given
 	h := newTestAuthHandler("valid-pass", "www.example.com", 143)
-	a := NewAuthenticator([]authHandler{h})
+	tony := New([]authHandler{h})
 
 	// when, then
-	test(t, a,
+	test(t, tony,
 		req(Plain, "user", "valid-pass", IMAP, "192.168.0.1"),
 		res("OK", 0, "www.example.com", 143))
 
-	test(t, a,
+	test(t, tony,
 		req(Plain, "user", "invalid-pass", IMAP, "192.168.0.1"),
 		res("Invalid username or password", 2, "", 0))
 }
@@ -50,25 +50,25 @@ func TestAuthentication(t *testing.T) {
 func TestClientIPDelay(t *testing.T) {
 	// given
 	h := newTestAuthHandler("valid-pass", "www.example.com", 143)
-	a := NewAuthenticator([]authHandler{h})
+	tony := New([]authHandler{h})
 
 	// when, then
-	test(t, a,
+	test(t, tony,
 		req(Plain, "user", "invalid-pass", IMAP, "192.168.0.1"),
 		res("Invalid username or password", 2, "", 0))
 
 	// Delay gets increased
-	test(t, a,
+	test(t, tony,
 		req(Plain, "user", "invalid-pass", IMAP, "192.168.0.1"),
 		res("Invalid username or password", 4, "", 0))
 
 	// Successful login is not penalized
-	test(t, a,
+	test(t, tony,
 		req(Plain, "user", "valid-pass", IMAP, "192.168.0.1"),
 		res("OK", 0, "www.example.com", 143))
 
 	// Successful login resets delay
-	test(t, a,
+	test(t, tony,
 		req(Plain, "user", "invalid-pass", IMAP, "192.168.0.1"),
 		res("Invalid username or password", 2, "", 0))
 }
@@ -76,16 +76,16 @@ func TestClientIPDelay(t *testing.T) {
 func TestDelayShouldOnlyAffectOneClientIP(t *testing.T) {
 	// given
 	h := newTestAuthHandler("valid-pass", "www.example.com", 143)
-	a := NewAuthenticator([]authHandler{h})
+	tony := New([]authHandler{h})
 
 	// when
-	test(t, a,
+	test(t, tony,
 		req(Plain, "user", "invalid-pass", IMAP, "192.168.0.1"),
 		res("Invalid username or password", 2, "", 0))
 
 	// then
 	// delay for second clientIP starts at baseDelay again
-	test(t, a,
+	test(t, tony,
 		req(Plain, "user", "invalid-pass", IMAP, "192.168.0.2"),
 		res("Invalid username or password", 2, "", 0))
 }
@@ -93,32 +93,32 @@ func TestDelayShouldOnlyAffectOneClientIP(t *testing.T) {
 func TestMaxDelayIsCapped(t *testing.T) {
 	// given
 	h := newTestAuthHandler("valid-pass", "www.example.com", 143)
-	a := NewAuthenticator([]authHandler{h})
+	tony := New([]authHandler{h})
 
 	// when
 	for i := 0; i < 20; i++ {
-		auth(t, a, req(Plain, "user", "invalid-pass", IMAP, "192.168.0.1"))
+		auth(t, tony, req(Plain, "user", "invalid-pass", IMAP, "192.168.0.1"))
 	}
 
 	// then
-	test(t, a,
+	test(t, tony,
 		req(Plain, "user", "invalid-pass", IMAP, "192.168.0.1"),
 		res("Invalid username or password", 16, "", 0))
 }
 
-func TestEachAuthenticatorUsesItsOwnCache(t *testing.T) {
+func TestEachInstanceUsesItsOwnCache(t *testing.T) {
 	// given
 	h := newTestAuthHandler("valid-pass", "www.example.com", 143)
-	a := NewAuthenticator([]authHandler{h})
-	b := NewAuthenticator([]authHandler{h})
+	tony1 := New([]authHandler{h})
+	tony2 := New([]authHandler{h})
 
 	// when
-	auth(t, a, req(Plain, "user", "invalid-pass", IMAP, "192.168.0.1"))
-	auth(t, a, req(Plain, "user", "invalid-pass", IMAP, "192.168.0.1"))
-	auth(t, a, req(Plain, "user", "invalid-pass", IMAP, "192.168.0.1"))
+	auth(t, tony1, req(Plain, "user", "invalid-pass", IMAP, "192.168.0.1"))
+	auth(t, tony1, req(Plain, "user", "invalid-pass", IMAP, "192.168.0.1"))
+	auth(t, tony1, req(Plain, "user", "invalid-pass", IMAP, "192.168.0.1"))
 
 	// delay from a does not affect b
-	test(t, b,
+	test(t, tony2,
 		req(Plain, "user", "invalid-pass", IMAP, "192.168.0.1"),
 		res("Invalid username or password", 2, "", 0))
 }
@@ -140,24 +140,24 @@ func TestMultipleAuthHandlers(t *testing.T) {
 	}
 
 	// when
-	a := NewAuthenticator([]authHandler{h1, h2})
+	tony := New([]authHandler{h1, h2})
 
 	// then
-	test(t, a,
+	test(t, tony,
 		req(Plain, "user", "valid-pass1", IMAP, "192.168.0.1"),
 		res("OK", 0, "www.example1.com", 1143))
 
-	test(t, a,
+	test(t, tony,
 		req(Plain, "user", "valid-pass2", IMAP, "192.168.0.1"),
 		res("OK", 0, "www.example2.com", 2143))
 
-	test(t, a,
+	test(t, tony,
 		req(Plain, "user", "invalid-pass", IMAP, "192.168.0.1"),
 		res("Invalid username or password", 2, "", 0))
 }
 
-func test(t *testing.T, authenticator *Authenticator, request Request, expected Response) {
-	response := auth(t, authenticator, request)
+func test(t *testing.T, tony *Tony, request Request, expected Response) {
+	response := auth(t, tony, request)
 
 	if response != expected {
 		t.Fatal("Request ", request, ": Expected ", expected, " got ", response)
@@ -174,8 +174,8 @@ func req(method Method, user string, pass string, protocol Protocol, clientIP st
 	}
 }
 
-func auth(t *testing.T, authenticator *Authenticator, request Request) Response {
-	return authenticator.Authenticate(request)
+func auth(t *testing.T, tony *Tony, request Request) Response {
+	return tony.Authenticate(request)
 }
 
 func res(status string, wait int, server string, port int) Response {
