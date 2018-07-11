@@ -48,7 +48,9 @@ type Authenticator struct {
 	maxDelay     int
 }
 
-type authHandler (func(request *Request) *Response)
+type authHandler interface {
+	authenticate(*Request) *Response
+}
 
 var cacheNameCounter uint64
 
@@ -67,7 +69,7 @@ func NewAuthenticator(authHandlers []authHandler) *Authenticator {
 func (a *Authenticator) Authenticate(request *Request) (*Response, error) {
 	var response *Response
 	for _, authHandler := range a.authHandlers {
-		response = authHandler(request)
+		response = authHandler.authenticate(request)
 		if response.AuthStatus == "OK" {
 			break
 		}

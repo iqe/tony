@@ -2,20 +2,37 @@ package tony
 
 import "testing"
 
-func TestAuthentication(t *testing.T) {
-	// given
-	h := func(r *Request) *Response {
-		if r.AuthPass == "valid-pass" {
-			return &Response{
-				AuthStatus: "OK",
-				AuthServer: "www.example.com",
-				AuthPort:   143,
-			}
-		}
+type testAuthHandler struct {
+	validPass     string
+	server        string
+	port          int
+	failureStatus string
+}
 
-		return &Response{AuthStatus: "Invalid username or password"}
+func (h *testAuthHandler) authenticate(r *Request) *Response {
+	if r.AuthPass == h.validPass {
+		return &Response{
+			AuthStatus: "OK",
+			AuthServer: h.server,
+			AuthPort:   h.port,
+		}
 	}
 
+	return &Response{AuthStatus: h.failureStatus}
+}
+
+func newTestAuthHandler(validPass string, server string, port int) authHandler {
+	return &testAuthHandler{
+		validPass:     validPass,
+		server:        server,
+		port:          port,
+		failureStatus: "Invalid username or password (msg from handler)",
+	}
+}
+
+func TestAuthentication(t *testing.T) {
+	// given
+	h := newTestAuthHandler("valid-pass", "www.example.com", 143)
 	a := NewAuthenticator([]authHandler{h})
 
 	// when, then
@@ -30,18 +47,7 @@ func TestAuthentication(t *testing.T) {
 
 func TestClientIPDelay(t *testing.T) {
 	// given
-	h := func(r *Request) *Response {
-		if r.AuthPass == "valid-pass" {
-			return &Response{
-				AuthStatus: "OK",
-				AuthServer: "www.example.com",
-				AuthPort:   143,
-			}
-		}
-
-		return &Response{AuthStatus: "Invalid username or password"}
-	}
-
+	h := newTestAuthHandler("valid-pass", "www.example.com", 143)
 	a := NewAuthenticator([]authHandler{h})
 
 	// when, then
@@ -67,18 +73,7 @@ func TestClientIPDelay(t *testing.T) {
 
 func TestDelayShouldOnlyAffectOneClientIP(t *testing.T) {
 	// given
-	h := func(r *Request) *Response {
-		if r.AuthPass == "valid-pass" {
-			return &Response{
-				AuthStatus: "OK",
-				AuthServer: "www.example.com",
-				AuthPort:   143,
-			}
-		}
-
-		return &Response{AuthStatus: "Invalid username or password"}
-	}
-
+	h := newTestAuthHandler("valid-pass", "www.example.com", 143)
 	a := NewAuthenticator([]authHandler{h})
 
 	// when
@@ -95,18 +90,7 @@ func TestDelayShouldOnlyAffectOneClientIP(t *testing.T) {
 
 func TestMaxDelayIsCapped(t *testing.T) {
 	// given
-	h := func(r *Request) *Response {
-		if r.AuthPass == "valid-pass" {
-			return &Response{
-				AuthStatus: "OK",
-				AuthServer: "www.example.com",
-				AuthPort:   143,
-			}
-		}
-
-		return &Response{AuthStatus: "Invalid username or password"}
-	}
-
+	h := newTestAuthHandler("valid-pass", "www.example.com", 143)
 	a := NewAuthenticator([]authHandler{h})
 
 	// when
@@ -122,18 +106,7 @@ func TestMaxDelayIsCapped(t *testing.T) {
 
 func TestEachAuthenticatorUsesItsOwnCache(t *testing.T) {
 	// given
-	h := func(r *Request) *Response {
-		if r.AuthPass == "valid-pass" {
-			return &Response{
-				AuthStatus: "OK",
-				AuthServer: "www.example.com",
-				AuthPort:   143,
-			}
-		}
-
-		return &Response{AuthStatus: "Invalid username or password"}
-	}
-
+	h := newTestAuthHandler("valid-pass", "www.example.com", 143)
 	a := NewAuthenticator([]authHandler{h})
 	b := NewAuthenticator([]authHandler{h})
 
@@ -149,28 +122,18 @@ func TestEachAuthenticatorUsesItsOwnCache(t *testing.T) {
 
 func TestMultipleAuthHandlers(t *testing.T) {
 	// given
-	h1 := func(r *Request) *Response {
-		if r.AuthPass == "valid-pass1" {
-			return &Response{
-				AuthStatus: "OK",
-				AuthServer: "www.example1.com",
-				AuthPort:   1143,
-			}
-		}
-
-		return &Response{AuthStatus: "Invalid username or password 1"}
+	h1 := &testAuthHandler{
+		validPass:     "valid-pass1",
+		server:        "www.example1.com",
+		port:          1143,
+		failureStatus: "Invalid username or password (msg from h1)",
 	}
 
-	h2 := func(r *Request) *Response {
-		if r.AuthPass == "valid-pass2" {
-			return &Response{
-				AuthStatus: "OK",
-				AuthServer: "www.example2.com",
-				AuthPort:   2143,
-			}
-		}
-
-		return &Response{AuthStatus: "Invalid username or password 2"}
+	h2 := &testAuthHandler{
+		validPass:     "valid-pass2",
+		server:        "www.example2.com",
+		port:          2143,
+		failureStatus: "Invalid username or password (msg from h2)",
 	}
 
 	// when
@@ -184,44 +147,11 @@ func TestMultipleAuthHandlers(t *testing.T) {
 	test(t, a,
 		req(Plain, "user", "valid-pass2", IMAP, "192.168.0.1"),
 		res("OK", 0, "www.example2.com", 2143))
-}
 
-func TestAuthStatusIsNotSetByAuthHandler(t *testing.T) {
-	// given
-	h1 := func(r *Request) *Response {
-		if r.AuthPass == "valid-pass1" {
-			return &Response{
-				AuthStatus: "OK",
-				AuthServer: "www.example1.com",
-				AuthPort:   1143,
-			}
-		}
-
-		return &Response{AuthStatus: "Invalid username or password 1"}
-	}
-
-	h2 := func(r *Request) *Response {
-		if r.AuthPass == "valid-pass2" {
-			return &Response{
-				AuthStatus: "OK",
-				AuthServer: "www.example2.com",
-				AuthPort:   2143,
-			}
-		}
-
-		return &Response{AuthStatus: "Invalid username or password 2"}
-	}
-
-	// when
-	a := NewAuthenticator([]authHandler{h1, h2})
-
-	// then
 	test(t, a,
 		req(Plain, "user", "invalid-pass", IMAP, "192.168.0.1"),
 		res("Invalid username or password", 2, "", 0))
 }
-
-// TODO different backend servers
 
 func test(t *testing.T, authenticator *Authenticator, request Request, expected Response) {
 	response := auth(t, authenticator, request)
