@@ -70,12 +70,18 @@ func (a *Authenticator) Authenticate(request *Request) (*Response, error) {
 	var response *Response
 	for _, authHandler := range a.authHandlers {
 		response, _ = authHandler.authenticate(request) // TODO use error for logging
-		if response.AuthStatus == "OK" {
+		if response != nil && response.AuthStatus == "OK" {
 			break
 		}
 	}
 
-	if response.AuthStatus == "OK" {
+	if response == nil {
+		delay := a.updateDelay(request.ClientIP)
+		response = &Response{
+			AuthStatus: "Invalid username or password",
+			AuthWait:   delay,
+		}
+	} else if response.AuthStatus == "OK" {
 		a.resetDelay(request.ClientIP)
 	} else {
 		delay := a.updateDelay(request.ClientIP)
