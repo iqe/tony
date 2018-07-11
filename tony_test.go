@@ -4,8 +4,16 @@ import "testing"
 
 func TestAuthentication(t *testing.T) {
 	// given
-	h := func(r *Request) bool {
-		return r.AuthPass == "valid-pass"
+	h := func(r *Request) *Response {
+		if r.AuthPass == "valid-pass" {
+			return &Response{
+				AuthStatus: "OK",
+				AuthServer: "www.example.com",
+				AuthPort:   143,
+			}
+		}
+
+		return &Response{AuthStatus: "Invalid username or password"}
 	}
 
 	a := NewAuthenticator("www.example.com", 143, h)
@@ -22,8 +30,16 @@ func TestAuthentication(t *testing.T) {
 
 func TestClientIPDelay(t *testing.T) {
 	// given
-	h := func(r *Request) bool {
-		return r.AuthPass == "valid-pass"
+	h := func(r *Request) *Response {
+		if r.AuthPass == "valid-pass" {
+			return &Response{
+				AuthStatus: "OK",
+				AuthServer: "www.example.com",
+				AuthPort:   143,
+			}
+		}
+
+		return &Response{AuthStatus: "Invalid username or password"}
 	}
 
 	a := NewAuthenticator("www.example.com", 143, h)
@@ -51,8 +67,16 @@ func TestClientIPDelay(t *testing.T) {
 
 func TestDelayShouldOnlyAffectOneClientIP(t *testing.T) {
 	// given
-	h := func(r *Request) bool {
-		return r.AuthPass == "valid-pass"
+	h := func(r *Request) *Response {
+		if r.AuthPass == "valid-pass" {
+			return &Response{
+				AuthStatus: "OK",
+				AuthServer: "www.example.com",
+				AuthPort:   143,
+			}
+		}
+
+		return &Response{AuthStatus: "Invalid username or password"}
 	}
 
 	a := NewAuthenticator("www.example.com", 143, h)
@@ -71,8 +95,16 @@ func TestDelayShouldOnlyAffectOneClientIP(t *testing.T) {
 
 func TestMaxDelayIsCapped(t *testing.T) {
 	// given
-	h := func(r *Request) bool {
-		return r.AuthPass == "valid-pass"
+	h := func(r *Request) *Response {
+		if r.AuthPass == "valid-pass" {
+			return &Response{
+				AuthStatus: "OK",
+				AuthServer: "www.example.com",
+				AuthPort:   143,
+			}
+		}
+
+		return &Response{AuthStatus: "Invalid username or password"}
 	}
 
 	a := NewAuthenticator("www.example.com", 143, h)
@@ -90,8 +122,16 @@ func TestMaxDelayIsCapped(t *testing.T) {
 
 func TestEachAuthenticatorUsesItsOwnCache(t *testing.T) {
 	// given
-	h := func(r *Request) bool {
-		return r.AuthPass == "valid-pass"
+	h := func(r *Request) *Response {
+		if r.AuthPass == "valid-pass" {
+			return &Response{
+				AuthStatus: "OK",
+				AuthServer: "www.example.com",
+				AuthPort:   143,
+			}
+		}
+
+		return &Response{AuthStatus: "Invalid username or password"}
 	}
 
 	a := NewAuthenticator("www.example.com", 143, h)

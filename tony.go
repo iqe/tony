@@ -50,7 +50,7 @@ type Authenticator struct {
 	maxDelay    int
 }
 
-type authHandler (func(request *Request) bool)
+type authHandler (func(request *Request) *Response)
 
 var cacheNameCounter uint64
 
@@ -69,23 +69,16 @@ func NewAuthenticator(authServer string, authPort int, authHandler authHandler) 
 }
 
 func (a *Authenticator) Authenticate(request *Request) (*Response, error) {
-	authenticated := a.authHandler(request)
+	response := a.authHandler(request)
 
-	if authenticated {
+	if response.AuthStatus == "OK" {
 		a.resetDelay(request.ClientIP)
-		return &Response{
-			AuthStatus: "OK",
-			AuthServer: a.authServer,
-			AuthPort:   a.authPort,
-		}, nil
+	} else {
+		delay := a.updateDelay(request.ClientIP)
+		response.AuthWait = delay
 	}
 
-	delay := a.updateDelay(request.ClientIP)
-
-	return &Response{
-		AuthStatus: "Invalid username or password",
-		AuthWait:   delay,
-	}, nil
+	return response, nil
 }
 
 func (a *Authenticator) updateDelay(key string) int {
