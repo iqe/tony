@@ -4,8 +4,8 @@ import "testing"
 
 func TestAuthentication(t *testing.T) {
 	// given
-	h := func(u string, p string) bool {
-		return p == "valid-pass"
+	h := func(r *Request) bool {
+		return r.AuthPass == "valid-pass"
 	}
 
 	a := NewAuthenticator("www.example.com", 143, h)
@@ -22,8 +22,8 @@ func TestAuthentication(t *testing.T) {
 
 func TestClientIPDelay(t *testing.T) {
 	// given
-	h := func(u string, p string) bool {
-		return p == "valid-pass"
+	h := func(r *Request) bool {
+		return r.AuthPass == "valid-pass"
 	}
 
 	a := NewAuthenticator("www.example.com", 143, h)
@@ -51,8 +51,8 @@ func TestClientIPDelay(t *testing.T) {
 
 func TestDelayShouldOnlyAffectOneClientIP(t *testing.T) {
 	// given
-	h := func(u string, p string) bool {
-		return p == "valid-pass"
+	h := func(r *Request) bool {
+		return r.AuthPass == "valid-pass"
 	}
 
 	a := NewAuthenticator("www.example.com", 143, h)
@@ -71,8 +71,8 @@ func TestDelayShouldOnlyAffectOneClientIP(t *testing.T) {
 
 func TestMaxDelayIsCapped(t *testing.T) {
 	// given
-	h := func(u string, p string) bool {
-		return p == "valid-pass"
+	h := func(r *Request) bool {
+		return r.AuthPass == "valid-pass"
 	}
 
 	a := NewAuthenticator("www.example.com", 143, h)
@@ -90,8 +90,8 @@ func TestMaxDelayIsCapped(t *testing.T) {
 
 func TestEachAuthenticatorUsesItsOwnCache(t *testing.T) {
 	// given
-	h := func(u string, p string) bool {
-		return p == "valid-pass"
+	h := func(r *Request) bool {
+		return r.AuthPass == "valid-pass"
 	}
 
 	a := NewAuthenticator("www.example.com", 143, h)
