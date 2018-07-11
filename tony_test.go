@@ -16,7 +16,7 @@ func TestAuthentication(t *testing.T) {
 		return &Response{AuthStatus: "Invalid username or password"}
 	}
 
-	a := NewAuthenticator("www.example.com", 143, h)
+	a := NewAuthenticator(h)
 
 	// when, then
 	test(t, a,
@@ -42,7 +42,7 @@ func TestClientIPDelay(t *testing.T) {
 		return &Response{AuthStatus: "Invalid username or password"}
 	}
 
-	a := NewAuthenticator("www.example.com", 143, h)
+	a := NewAuthenticator(h)
 
 	// when, then
 	test(t, a,
@@ -79,7 +79,7 @@ func TestDelayShouldOnlyAffectOneClientIP(t *testing.T) {
 		return &Response{AuthStatus: "Invalid username or password"}
 	}
 
-	a := NewAuthenticator("www.example.com", 143, h)
+	a := NewAuthenticator(h)
 
 	// when
 	test(t, a,
@@ -107,7 +107,7 @@ func TestMaxDelayIsCapped(t *testing.T) {
 		return &Response{AuthStatus: "Invalid username or password"}
 	}
 
-	a := NewAuthenticator("www.example.com", 143, h)
+	a := NewAuthenticator(h)
 
 	// when
 	for i := 0; i < 20; i++ {
@@ -134,8 +134,8 @@ func TestEachAuthenticatorUsesItsOwnCache(t *testing.T) {
 		return &Response{AuthStatus: "Invalid username or password"}
 	}
 
-	a := NewAuthenticator("www.example.com", 143, h)
-	b := NewAuthenticator("www.example.com", 143, h)
+	a := NewAuthenticator(h)
+	b := NewAuthenticator(h)
 
 	// when
 	auth(t, a, req(Plain, "user", "invalid-pass", IMAP, "192.168.0.1"))

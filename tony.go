@@ -42,8 +42,6 @@ type Response struct {
 }
 
 type Authenticator struct {
-	authServer  string
-	authPort    int
 	authHandler authHandler
 	delayCache  *cache2go.CacheTable
 	baseDelay   int
@@ -54,13 +52,11 @@ type authHandler (func(request *Request) *Response)
 
 var cacheNameCounter uint64
 
-func NewAuthenticator(authServer string, authPort int, authHandler authHandler) *Authenticator {
+func NewAuthenticator(authHandler authHandler) *Authenticator {
 	atomic.AddUint64(&cacheNameCounter, 1)
 	cache := cache2go.Cache(fmt.Sprintf("delayCache-%v", cacheNameCounter))
 
 	return &Authenticator{
-		authServer:  authServer,
-		authPort:    authPort,
 		authHandler: authHandler,
 		delayCache:  cache,
 		baseDelay:   2,
