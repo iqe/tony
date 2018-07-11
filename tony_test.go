@@ -13,20 +13,20 @@ type testAuthHandler struct {
 	triggerError  bool
 }
 
-func (h *testAuthHandler) Authenticate(r *Request) (*Response, error) {
+func (h *testAuthHandler) Authenticate(r Request) (Response, error) {
 	if h.triggerError {
-		return nil, errors.New("An error occured")
+		return Response{}, errors.New("An error occured")
 	}
 
 	if r.AuthPass == h.validPass {
-		return &Response{
+		return Response{
 			AuthStatus: "OK",
 			AuthServer: h.server,
 			AuthPort:   h.port,
 		}, nil
 	}
 
-	return &Response{AuthStatus: h.failureStatus}, nil
+	return Response{AuthStatus: h.failureStatus}, nil
 }
 
 func newTestAuthHandler(validPass string, server string, port int) *testAuthHandler {
@@ -224,11 +224,11 @@ func req(method Method, user string, pass string, protocol Protocol, clientIP st
 }
 
 func auth(t *testing.T, authenticator *Authenticator, request Request) Response {
-	response, err := authenticator.Authenticate(&request)
+	response, err := authenticator.Authenticate(request)
 	if err != nil {
 		t.Fatal(err)
 	}
-	return *response
+	return response
 }
 
 func res(status string, wait int, server string, port int) Response {
