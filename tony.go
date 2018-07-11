@@ -41,15 +41,19 @@ type Response struct {
 	AuthPort   int
 }
 
+type authHandler interface {
+	Authenticate(Request) Response
+}
+
 type Authenticator struct {
+	authHandler authHandler
+}
+
+type AuthenticatorInternal struct {
 	authHandlers []authHandler
 	delayCache   *cache2go.CacheTable
 	baseDelay    int
 	maxDelay     int
-}
-
-type authHandler interface {
-	Authenticate(Request) Response
 }
 
 var cacheNameCounter uint64
@@ -59,14 +63,20 @@ func NewAuthenticator(authHandlers []authHandler) *Authenticator {
 	cache := cache2go.Cache(fmt.Sprintf("delayCache-%v", cacheNameCounter))
 
 	return &Authenticator{
-		authHandlers: authHandlers,
-		delayCache:   cache,
-		baseDelay:    2,
-		maxDelay:     16,
+		authHandler: &AuthenticatorInternal{
+			authHandlers: authHandlers,
+			delayCache:   cache,
+			baseDelay:    2,
+			maxDelay:     16,
+		},
 	}
 }
 
 func (a *Authenticator) Authenticate(request Request) Response {
+	return a.authHandler.Authenticate(request)
+}
+
+func (a *AuthenticatorInternal) Authenticate(request Request) Response {
 	var response Response
 	for _, authHandler := range a.authHandlers {
 		response = authHandler.Authenticate(request)
@@ -86,7 +96,7 @@ func (a *Authenticator) Authenticate(request Request) Response {
 	return response
 }
 
-func (a *Authenticator) updateDelay(key string) int {
+func (a *AuthenticatorInternal) updateDelay(key string) int {
 	delay := a.baseDelay
 
 	res, err := a.delayCache.Value(key)
@@ -100,6 +110,6 @@ func (a *Authenticator) updateDelay(key string) int {
 	return delay
 }
 
-func (a *Authenticator) resetDelay(key string) {
+func (a *AuthenticatorInternal) resetDelay(key string) {
 	a.delayCache.Delete(key)
 }
