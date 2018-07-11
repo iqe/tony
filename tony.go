@@ -83,19 +83,14 @@ func (a *Authenticator) Authenticate(request Request) Response {
 }
 
 func (a *AuthenticatorInternal) Authenticate(request Request) Response {
-	var response Response
 	for _, authHandler := range a.authHandlers {
-		response = authHandler.Authenticate(request)
+		response := authHandler.Authenticate(request)
 		if response.AuthStatus == "OK" {
-			break
+			return response
 		}
 	}
 
-	if response.AuthStatus != "OK" {
-		response.AuthStatus = "Invalid username or password"
-	}
-
-	return response
+	return Response{AuthStatus: "Invalid username or password"}
 }
 
 func (t *Throttler) Authenticate(request Request) Response {
