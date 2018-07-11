@@ -186,6 +186,41 @@ func TestMultipleAuthHandlers(t *testing.T) {
 		res("OK", 0, "www.example2.com", 2143))
 }
 
+func TestAuthStatusIsNotSetByAuthHandler(t *testing.T) {
+	// given
+	h1 := func(r *Request) *Response {
+		if r.AuthPass == "valid-pass1" {
+			return &Response{
+				AuthStatus: "OK",
+				AuthServer: "www.example1.com",
+				AuthPort:   1143,
+			}
+		}
+
+		return &Response{AuthStatus: "Invalid username or password 1"}
+	}
+
+	h2 := func(r *Request) *Response {
+		if r.AuthPass == "valid-pass2" {
+			return &Response{
+				AuthStatus: "OK",
+				AuthServer: "www.example2.com",
+				AuthPort:   2143,
+			}
+		}
+
+		return &Response{AuthStatus: "Invalid username or password 2"}
+	}
+
+	// when
+	a := NewAuthenticator([]authHandler{h1, h2})
+
+	// then
+	test(t, a,
+		req(Plain, "user", "invalid-pass", IMAP, "192.168.0.1"),
+		res("Invalid username or password", 2, "", 0))
+}
+
 // TODO different backend servers
 
 func test(t *testing.T, authenticator *Authenticator, request Request, expected Response) {

@@ -77,6 +77,7 @@ func (a *Authenticator) Authenticate(request *Request) (*Response, error) {
 		a.resetDelay(request.ClientIP)
 	} else {
 		delay := a.updateDelay(request.ClientIP)
+		response.AuthStatus = "Invalid username or password"
 		response.AuthWait = delay
 	}
 
