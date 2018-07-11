@@ -13,7 +13,7 @@ type testAuthHandler struct {
 	triggerError  bool
 }
 
-func (h *testAuthHandler) authenticate(r *Request) (*Response, error) {
+func (h *testAuthHandler) Authenticate(r *Request) (*Response, error) {
 	if h.triggerError {
 		return nil, errors.New("An error occured")
 	}

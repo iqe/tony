@@ -49,7 +49,7 @@ type Authenticator struct {
 }
 
 type authHandler interface {
-	authenticate(*Request) (*Response, error)
+	Authenticate(*Request) (*Response, error)
 }
 
 var cacheNameCounter uint64
@@ -69,7 +69,7 @@ func NewAuthenticator(authHandlers []authHandler) *Authenticator {
 func (a *Authenticator) Authenticate(request *Request) (*Response, error) {
 	var response *Response
 	for _, authHandler := range a.authHandlers {
-		response, _ = authHandler.authenticate(request) // TODO use error for logging
+		response, _ = authHandler.Authenticate(request) // TODO use error for logging
 		if response != nil && response.AuthStatus == "OK" {
 			break
 		}
