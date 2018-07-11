@@ -49,7 +49,7 @@ type Tony struct {
 	authHandler authHandler
 }
 
-type AuthenticatorInternal struct {
+type Looper struct {
 	authHandlers []authHandler
 }
 
@@ -68,7 +68,7 @@ func New(authHandlers []authHandler) *Tony {
 
 	return &Tony{
 		authHandler: &Throttler{
-			authHandler: &AuthenticatorInternal{
+			authHandler: &Looper{
 				authHandlers: authHandlers,
 			},
 			delayCache: cache,
@@ -82,8 +82,8 @@ func (t *Tony) Authenticate(request Request) Response {
 	return t.authHandler.Authenticate(request)
 }
 
-func (a *AuthenticatorInternal) Authenticate(request Request) Response {
-	for _, authHandler := range a.authHandlers {
+func (l *Looper) Authenticate(request Request) Response {
+	for _, authHandler := range l.authHandlers {
 		response := authHandler.Authenticate(request)
 		if response.AuthStatus == "OK" {
 			return response
