@@ -60,6 +60,11 @@ type Throttler struct {
 	maxDelay    int
 }
 
+type MethodGate struct {
+	authHandler    authHandler
+	allowedMethods []Method
+}
+
 var cacheNameCounter uint64
 
 func New(authHandlers []authHandler) *Tony {
@@ -68,8 +73,11 @@ func New(authHandlers []authHandler) *Tony {
 
 	return &Tony{
 		authHandler: &Throttler{
-			authHandler: &Looper{
-				authHandlers: authHandlers,
+			authHandler: &MethodGate{
+				authHandler: &Looper{
+					authHandlers: authHandlers,
+				},
+				allowedMethods: []Method{Plain},
 			},
 			delayCache: cache,
 			baseDelay:  2,
@@ -122,4 +130,14 @@ func (t *Throttler) updateDelay(key string) int {
 
 func (t *Throttler) resetDelay(key string) {
 	t.delayCache.Delete(key)
+}
+
+func (m *MethodGate) Authenticate(request Request) Response {
+	for _, method := range m.allowedMethods {
+		if request.AuthMethod == method {
+			return m.authHandler.Authenticate(request)
+		}
+	}
+
+	return Response{AuthStatus: "Authentication method not supported"}
 }

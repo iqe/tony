@@ -156,6 +156,17 @@ func TestMultipleAuthHandlers(t *testing.T) {
 		res("Invalid username or password", 2, "", 0))
 }
 
+func TestOnlyMethodPlainIsAllowed(t *testing.T) {
+	// given
+	h := newTestAuthHandler("valid-pass", "www.example.com", 143)
+	tony := New([]authHandler{h})
+
+	// when
+	test(t, tony,
+		req(CramMD5, "user", "valid-pass", IMAP, "192.168.0.1"),
+		res("Authentication method not supported", 2, "", 0))
+}
+
 func test(t *testing.T, tony *Tony, request Request, expected Response) {
 	response := auth(t, tony, request)
 
