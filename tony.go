@@ -51,9 +51,13 @@ type Authenticator struct {
 
 type AuthenticatorInternal struct {
 	authHandlers []authHandler
-	delayCache   *cache2go.CacheTable
-	baseDelay    int
-	maxDelay     int
+}
+
+type Throttler struct {
+	authHandler authHandler
+	delayCache  *cache2go.CacheTable
+	baseDelay   int
+	maxDelay    int
 }
 
 var cacheNameCounter uint64
@@ -63,11 +67,13 @@ func NewAuthenticator(authHandlers []authHandler) *Authenticator {
 	cache := cache2go.Cache(fmt.Sprintf("delayCache-%v", cacheNameCounter))
 
 	return &Authenticator{
-		authHandler: &AuthenticatorInternal{
-			authHandlers: authHandlers,
-			delayCache:   cache,
-			baseDelay:    2,
-			maxDelay:     16,
+		authHandler: &Throttler{
+			authHandler: &AuthenticatorInternal{
+				authHandlers: authHandlers,
+			},
+			delayCache: cache,
+			baseDelay:  2,
+			maxDelay:   16,
 		},
 	}
 }
@@ -85,31 +91,40 @@ func (a *AuthenticatorInternal) Authenticate(request Request) Response {
 		}
 	}
 
-	if response.AuthStatus == "OK" {
-		a.resetDelay(request.ClientIP)
-	} else {
-		delay := a.updateDelay(request.ClientIP)
+	if response.AuthStatus != "OK" {
 		response.AuthStatus = "Invalid username or password"
+	}
+
+	return response
+}
+
+func (t *Throttler) Authenticate(request Request) Response {
+	response := t.authHandler.Authenticate(request)
+
+	if response.AuthStatus == "OK" {
+		t.resetDelay(request.ClientIP)
+	} else {
+		delay := t.updateDelay(request.ClientIP)
 		response.AuthWait = delay
 	}
 
 	return response
 }
 
-func (a *AuthenticatorInternal) updateDelay(key string) int {
-	delay := a.baseDelay
+func (t *Throttler) updateDelay(key string) int {
+	delay := t.baseDelay
 
-	res, err := a.delayCache.Value(key)
+	res, err := t.delayCache.Value(key)
 	if err == nil {
 		delay = res.Data().(int)
 	}
 
-	newDelay := int(math.Min(float64(delay*2), float64(a.maxDelay)))
-	a.delayCache.Add(key, 60*time.Second, newDelay)
+	newDelay := int(math.Min(float64(delay*2), float64(t.maxDelay)))
+	t.delayCache.Add(key, 60*time.Second, newDelay)
 
 	return delay
 }
 
-func (a *AuthenticatorInternal) resetDelay(key string) {
-	a.delayCache.Delete(key)
+func (t *Throttler) resetDelay(key string) {
+	t.delayCache.Delete(key)
 }
