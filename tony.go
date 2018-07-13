@@ -41,33 +41,33 @@ type Response struct {
 	AuthPort   int
 }
 
-type authHandler interface {
+type AuthHandler interface {
 	Authenticate(Request) Response
 }
 
 type Tony struct {
-	authHandler authHandler
+	authHandler AuthHandler
 }
 
 type Looper struct {
-	authHandlers []authHandler
+	authHandlers []AuthHandler
 }
 
 type Throttler struct {
-	authHandler authHandler
+	authHandler AuthHandler
 	delayCache  *cache2go.CacheTable
 	baseDelay   int
 	maxDelay    int
 }
 
 type MethodGate struct {
-	authHandler    authHandler
+	authHandler    AuthHandler
 	allowedMethods []Method
 }
 
 var cacheNameCounter uint64
 
-func New(authHandlers []authHandler) *Tony {
+func New(authHandlers []AuthHandler) *Tony {
 	atomic.AddUint64(&cacheNameCounter, 1)
 	cache := cache2go.Cache(fmt.Sprintf("delayCache-%v", cacheNameCounter))
 

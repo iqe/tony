@@ -35,7 +35,7 @@ func newTestAuthHandler(validPass string, server string, port int) *testAuthHand
 func TestAuthentication(t *testing.T) {
 	// given
 	h := newTestAuthHandler("valid-pass", "www.example.com", 143)
-	tony := New([]authHandler{h})
+	tony := New([]AuthHandler{h})
 
 	// when, then
 	test(t, tony,
@@ -50,7 +50,7 @@ func TestAuthentication(t *testing.T) {
 func TestClientIPDelay(t *testing.T) {
 	// given
 	h := newTestAuthHandler("valid-pass", "www.example.com", 143)
-	tony := New([]authHandler{h})
+	tony := New([]AuthHandler{h})
 
 	// when, then
 	test(t, tony,
@@ -76,7 +76,7 @@ func TestClientIPDelay(t *testing.T) {
 func TestDelayShouldOnlyAffectOneClientIP(t *testing.T) {
 	// given
 	h := newTestAuthHandler("valid-pass", "www.example.com", 143)
-	tony := New([]authHandler{h})
+	tony := New([]AuthHandler{h})
 
 	// when
 	test(t, tony,
@@ -93,7 +93,7 @@ func TestDelayShouldOnlyAffectOneClientIP(t *testing.T) {
 func TestMaxDelayIsCapped(t *testing.T) {
 	// given
 	h := newTestAuthHandler("valid-pass", "www.example.com", 143)
-	tony := New([]authHandler{h})
+	tony := New([]AuthHandler{h})
 
 	// when
 	for i := 0; i < 20; i++ {
@@ -109,8 +109,8 @@ func TestMaxDelayIsCapped(t *testing.T) {
 func TestEachInstanceUsesItsOwnCache(t *testing.T) {
 	// given
 	h := newTestAuthHandler("valid-pass", "www.example.com", 143)
-	tony1 := New([]authHandler{h})
-	tony2 := New([]authHandler{h})
+	tony1 := New([]AuthHandler{h})
+	tony2 := New([]AuthHandler{h})
 
 	// when
 	auth(t, tony1, req(Plain, "user", "invalid-pass", IMAP, "192.168.0.1"))
@@ -140,7 +140,7 @@ func TestMultipleAuthHandlers(t *testing.T) {
 	}
 
 	// when
-	tony := New([]authHandler{h1, h2})
+	tony := New([]AuthHandler{h1, h2})
 
 	// then
 	test(t, tony,
@@ -159,7 +159,7 @@ func TestMultipleAuthHandlers(t *testing.T) {
 func TestOnlyMethodPlainIsAllowed(t *testing.T) {
 	// given
 	h := newTestAuthHandler("valid-pass", "www.example.com", 143)
-	tony := New([]authHandler{h})
+	tony := New([]AuthHandler{h})
 
 	// when
 	test(t, tony,
