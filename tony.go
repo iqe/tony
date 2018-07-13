@@ -38,11 +38,3 @@ type Response struct {
 type AuthHandler interface {
 	Authenticate(Request) Response
 }
-
-type Tony struct {
-	AuthHandler AuthHandler
-}
-
-func (t *Tony) Authenticate(request Request) Response {
-	return t.AuthHandler.Authenticate(request)
-}

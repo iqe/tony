@@ -23,18 +23,16 @@ func (h *testAuthHandler) Authenticate(r Request) Response {
 	return Response{AuthStatus: h.failureStatus}
 }
 
-func New(handlers []AuthHandler) *Tony {
-	tony := &Tony{}
+func New(handlers []AuthHandler) AuthHandler {
 	throttler := NewThrottler(2, 16)
 	methodGate := NewMethodGate(Plain)
 	looper := NewLooper()
 
-	tony.AuthHandler = throttler
 	throttler.AuthHandler = methodGate
 	methodGate.AuthHandler = looper
 	looper.AuthHandlers = handlers
 
-	return tony
+	return throttler
 }
 
 func newTestAuthHandler(validPass string, server string, port int) *testAuthHandler {
@@ -181,8 +179,8 @@ func TestOnlyMethodPlainIsAllowed(t *testing.T) {
 		res("Authentication method not supported", 2, "", 0))
 }
 
-func test(t *testing.T, tony *Tony, request Request, expected Response) {
-	response := auth(t, tony, request)
+func test(t *testing.T, handler AuthHandler, request Request, expected Response) {
+	response := auth(t, handler, request)
 
 	if response != expected {
 		t.Fatal("Request ", request, ": Expected ", expected, " got ", response)
@@ -199,8 +197,8 @@ func req(method Method, user string, pass string, protocol Protocol, clientIP st
 	}
 }
 
-func auth(t *testing.T, tony *Tony, request Request) Response {
-	return tony.Authenticate(request)
+func auth(t *testing.T, h AuthHandler, request Request) Response {
+	return h.Authenticate(request)
 }
 
 func res(status string, wait int, server string, port int) Response {
