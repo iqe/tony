@@ -68,24 +68,31 @@ type MethodGate struct {
 	allowedMethods []Method
 }
 
+func New(authHandlers []AuthHandler) *Tony {
+	throttler := newThrottler()
+	throttler.baseDelay = 2
+	throttler.maxDelay = 16
+
+	throttler.authHandler = &MethodGate{
+		authHandler: &Looper{
+			authHandlers: authHandlers,
+		},
+		allowedMethods: []Method{Plain},
+	}
+
+	return &Tony{
+		authHandler: throttler,
+	}
+}
+
 var cacheNameCounter uint64
 
-func New(authHandlers []AuthHandler) *Tony {
+func newThrottler() *Throttler {
 	atomic.AddUint64(&cacheNameCounter, 1)
 	cache := cache2go.Cache(fmt.Sprintf("delayCache-%v", cacheNameCounter))
 
-	return &Tony{
-		authHandler: &Throttler{
-			authHandler: &MethodGate{
-				authHandler: &Looper{
-					authHandlers: authHandlers,
-				},
-				allowedMethods: []Method{Plain},
-			},
-			delayCache: cache,
-			baseDelay:  2,
-			maxDelay:   16,
-		},
+	return &Throttler{
+		delayCache: cache,
 	}
 }
 
