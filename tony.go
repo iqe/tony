@@ -20,16 +20,17 @@ type Request struct {
 type Method int
 
 const (
-	Plain Method = iota
-	Apop
+	OtherMethod Method = iota
+	Plain
 	CramMD5
-	External
+	DigestMD5
 )
 
 type Protocol int
 
 const (
-	IMAP Protocol = iota
+	OtherProtocol Protocol = iota
+	IMAP
 	POP3
 	SMTP
 )
