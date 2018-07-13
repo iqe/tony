@@ -12,9 +12,18 @@ func main() {
 	throttler := tony.NewThrottler(2, 16)
 	methodGate := tony.NewMethodGate(tony.Plain)
 	looper := tony.NewLooper()
+	mailIqeIoEndpointSelect := tony.NewEndpointSelect(map[tony.Protocol]tony.Endpoint{
+		tony.IMAP: tony.NewEndpoint("mail.iqe.io", 143, tony.STARTTLS),
+		tony.SMTP: tony.NewEndpoint("mail.iqe.io", 587, tony.STARTTLS),
+	})
+	mailIqeIoIMAPLogin := tony.NewIMAPLogin(tony.NewEndpoint("mail.iqe.io", 993, tony.SSLOn))
 
 	throttler.AuthHandler = methodGate
 	methodGate.AuthHandler = looper
+	looper.AuthHandlers = []tony.AuthHandler{
+		mailIqeIoEndpointSelect,
+	}
+	mailIqeIoEndpointSelect.AuthHandler = mailIqeIoIMAPLogin
 
 	baseHandler := throttler
 
