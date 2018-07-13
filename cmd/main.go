@@ -9,18 +9,18 @@ import (
 )
 
 func main() {
-	tony := &tony.Tony{}
+	t := &tony.Tony{}
 	throttler := tony.NewThrottler(2, 16)
 	methodGate := tony.NewMethodGate(tony.Plain)
 	looper := tony.NewLooper()
 
-	tony.AuthHandler = throttler
+	t.AuthHandler = throttler
 	throttler.AuthHandler = methodGate
 	methodGate.AuthHandler = looper
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		authRequest := parseAuthRequest(r)
-		authResponse := tony.Authenticate(authRequest)
+		authResponse := t.Authenticate(authRequest)
 		writeAuthResponse(authResponse, w)
 
 		w.Header()["Date"] = nil // Remove default Date header
