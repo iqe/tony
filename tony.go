@@ -49,60 +49,53 @@ type AuthHandler interface {
 }
 
 type Tony struct {
-	authHandler AuthHandler
+	AuthHandler AuthHandler
 }
 
 type Looper struct {
-	authHandlers []AuthHandler
+	AuthHandlers []AuthHandler
 }
 
 type Throttler struct {
-	authHandler AuthHandler
+	AuthHandler AuthHandler
 	delayCache  *cache2go.CacheTable
 	baseDelay   int
 	maxDelay    int
 }
 
 type MethodGate struct {
-	authHandler    AuthHandler
+	AuthHandler    AuthHandler
 	allowedMethods []Method
-}
-
-func New(authHandlers []AuthHandler) *Tony {
-	throttler := newThrottler()
-	throttler.baseDelay = 2
-	throttler.maxDelay = 16
-
-	throttler.authHandler = &MethodGate{
-		authHandler: &Looper{
-			authHandlers: authHandlers,
-		},
-		allowedMethods: []Method{Plain},
-	}
-
-	return &Tony{
-		authHandler: throttler,
-	}
 }
 
 var cacheNameCounter uint64
 
-func newThrottler() *Throttler {
+func NewThrottler(baseDelay int, maxDelay int) *Throttler {
 	atomic.AddUint64(&cacheNameCounter, 1)
 	cache := cache2go.Cache(fmt.Sprintf("delayCache-%v", cacheNameCounter))
 
 	return &Throttler{
 		delayCache: cache,
+		baseDelay:  baseDelay,
+		maxDelay:   maxDelay,
 	}
 }
 
+func NewLooper() *Looper {
+	return &Looper{}
+}
+
+func NewMethodGate(allowedMethods ...Method) *MethodGate {
+	return &MethodGate{allowedMethods: allowedMethods}
+}
+
 func (t *Tony) Authenticate(request Request) Response {
-	return t.authHandler.Authenticate(request)
+	return t.AuthHandler.Authenticate(request)
 }
 
 func (l *Looper) Authenticate(request Request) Response {
-	for _, authHandler := range l.authHandlers {
-		response := authHandler.Authenticate(request)
+	for _, AuthHandler := range l.AuthHandlers {
+		response := AuthHandler.Authenticate(request)
 		if response.AuthStatus == AuthStatusOK {
 			return response
 		}
@@ -112,7 +105,7 @@ func (l *Looper) Authenticate(request Request) Response {
 }
 
 func (t *Throttler) Authenticate(request Request) Response {
-	response := t.authHandler.Authenticate(request)
+	response := t.AuthHandler.Authenticate(request)
 
 	if response.AuthStatus == AuthStatusOK {
 		t.resetDelay(request.ClientIP)
@@ -145,7 +138,7 @@ func (t *Throttler) resetDelay(key string) {
 func (m *MethodGate) Authenticate(request Request) Response {
 	for _, method := range m.allowedMethods {
 		if request.AuthMethod == method {
-			return m.authHandler.Authenticate(request)
+			return m.AuthHandler.Authenticate(request)
 		}
 	}
 

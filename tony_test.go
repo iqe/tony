@@ -23,6 +23,20 @@ func (h *testAuthHandler) Authenticate(r Request) Response {
 	return Response{AuthStatus: h.failureStatus}
 }
 
+func New(handlers []AuthHandler) *Tony {
+	tony := &Tony{}
+	throttler := NewThrottler(2, 16)
+	methodGate := NewMethodGate(Plain)
+	looper := NewLooper()
+
+	tony.AuthHandler = throttler
+	throttler.AuthHandler = methodGate
+	methodGate.AuthHandler = looper
+	looper.AuthHandlers = handlers
+
+	return tony
+}
+
 func newTestAuthHandler(validPass string, server string, port int) *testAuthHandler {
 	return &testAuthHandler{
 		validPass:     validPass,
