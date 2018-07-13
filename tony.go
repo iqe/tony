@@ -35,6 +35,8 @@ const (
 	SMTP
 )
 
+const AuthStatusOK = "OK"
+
 type Response struct {
 	AuthStatus string
 	AuthWait   int
@@ -94,7 +96,7 @@ func (t *Tony) Authenticate(request Request) Response {
 func (l *Looper) Authenticate(request Request) Response {
 	for _, authHandler := range l.authHandlers {
 		response := authHandler.Authenticate(request)
-		if response.AuthStatus == "OK" {
+		if response.AuthStatus == AuthStatusOK {
 			return response
 		}
 	}
@@ -105,7 +107,7 @@ func (l *Looper) Authenticate(request Request) Response {
 func (t *Throttler) Authenticate(request Request) Response {
 	response := t.authHandler.Authenticate(request)
 
-	if response.AuthStatus == "OK" {
+	if response.AuthStatus == AuthStatusOK {
 		t.resetDelay(request.ClientIP)
 	} else {
 		delay := t.updateDelay(request.ClientIP)

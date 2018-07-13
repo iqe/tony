@@ -14,7 +14,7 @@ type testAuthHandler struct {
 func (h *testAuthHandler) Authenticate(r Request) Response {
 	if r.AuthPass == h.validPass {
 		return Response{
-			AuthStatus: "OK",
+			AuthStatus: AuthStatusOK,
 			AuthServer: h.server,
 			AuthPort:   h.port,
 		}
