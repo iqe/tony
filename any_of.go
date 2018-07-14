@@ -1,15 +1,15 @@
 package tony
 
-type looper struct {
+type anyOfHandler struct {
 	next []AuthHandler
 }
 
 func AnyOf(next ...AuthHandler) AuthHandler {
-	return &looper{next: next}
+	return &anyOfHandler{next: next}
 }
 
-func (l *looper) Authenticate(request Request) Response {
-	for _, AuthHandler := range l.next {
+func (h *anyOfHandler) Authenticate(request Request) Response {
+	for _, AuthHandler := range h.next {
 		response := AuthHandler.Authenticate(request)
 		if response.AuthStatus == authStatusOK {
 			return response

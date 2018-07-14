@@ -28,16 +28,16 @@ func NewEndpoint(server string, port int, ssl SSL) Endpoint {
 
 type Endpoints map[Protocol]Endpoint
 
-type endpointSelect struct {
+type endpointSelectionHandler struct {
 	next      AuthHandler
 	endpoints Endpoints
 }
 
 func EndpointSelection(endpoints Endpoints, next AuthHandler) AuthHandler {
-	return &endpointSelect{endpoints: endpoints, next: next}
+	return &endpointSelectionHandler{endpoints: endpoints, next: next}
 }
 
-func (h *endpointSelect) Authenticate(r Request) Response {
+func (h *endpointSelectionHandler) Authenticate(r Request) Response {
 	response := h.next.Authenticate(r)
 
 	endpoint, ok := h.endpoints[r.AuthProtocol]

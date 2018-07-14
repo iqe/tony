@@ -7,17 +7,17 @@ import (
 	"github.com/emersion/go-imap/client"
 )
 
-type imapLogin struct {
+type imapLoginHandler struct {
 	Endpoint
 }
 
 func IMAPLogin(endpoint Endpoint) AuthHandler {
-	return &imapLogin{
+	return &imapLoginHandler{
 		Endpoint: endpoint,
 	}
 }
 
-func (h *imapLogin) Authenticate(r Request) Response {
+func (h *imapLoginHandler) Authenticate(r Request) Response {
 	err := h.imapLogin(r.AuthUser, r.AuthPass)
 
 	if err != nil {
@@ -31,7 +31,7 @@ func (h *imapLogin) Authenticate(r Request) Response {
 	}
 }
 
-func (h *imapLogin) imapLogin(username string, password string) error {
+func (h *imapLoginHandler) imapLogin(username string, password string) error {
 	var err error
 	var c *client.Client
 
