@@ -11,10 +11,6 @@ type testAuthHandler struct {
 	failureStatus string
 }
 
-func (h *testAuthHandler) With(next AuthHandler) AuthHandler {
-	panic("Should never be called")
-}
-
 func (h *testAuthHandler) Authenticate(r Request) Response {
 	if r.AuthPass == h.validPass {
 		return Response{
