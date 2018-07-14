@@ -4,13 +4,12 @@ type looper struct {
 	next []AuthHandler
 }
 
-func AnyOf() AuthHandler {
-	return &looper{}
+func AnyOf(next ...AuthHandler) AuthHandler {
+	return &looper{next: next}
 }
 
 func (l *looper) With(next AuthHandler) AuthHandler {
-	l.next = append(l.next, next)
-	return l
+	panic("Use AnyOf() to chain AuthHandlers")
 }
 
 func (l *looper) Authenticate(request Request) Response {
