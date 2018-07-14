@@ -37,6 +37,11 @@ func NewEndpointSelect(endpoints Endpoints) *EndpointSelect {
 	return &EndpointSelect{Endpoints: endpoints}
 }
 
+func (h *EndpointSelect) With(next AuthHandler) AuthHandler {
+	h.AuthHandler = next
+	return h
+}
+
 func (h *EndpointSelect) Authenticate(r Request) Response {
 	response := h.AuthHandler.Authenticate(r)
 

@@ -11,6 +11,10 @@ type testAuthHandler struct {
 	failureStatus string
 }
 
+func (h *testAuthHandler) With(next AuthHandler) AuthHandler {
+	panic("Should never be called")
+}
+
 func (h *testAuthHandler) Authenticate(r Request) Response {
 	if r.AuthPass == h.validPass {
 		return Response{
@@ -24,15 +28,16 @@ func (h *testAuthHandler) Authenticate(r Request) Response {
 }
 
 func New(handlers []AuthHandler) AuthHandler {
-	throttler := NewThrottler(2, 16)
-	methodGate := NewMethodGate(Plain)
 	looper := NewLooper()
+	for _, h := range handlers {
+		looper.With(h)
+	}
 
-	throttler.AuthHandler = methodGate
-	methodGate.AuthHandler = looper
-	looper.AuthHandlers = handlers
-
-	return throttler
+	return NewThrottler(2, 16).With(
+		NewMethodGate(Plain).With(
+			looper,
+		),
+	)
 }
 
 func newTestAuthHandler(validPass string, server string, port int) *testAuthHandler {

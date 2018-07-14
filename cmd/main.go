@@ -5,31 +5,21 @@ import (
 	"log"
 	"net/http"
 
-	"iqe.io/tony"
+	t "iqe.io/tony"
 )
 
 func main() {
-	throttler := tony.NewThrottler(2, 16)
-	methodGate := tony.NewMethodGate(tony.Plain)
-	looper := tony.NewLooper()
-	mailIqeIoEndpointSelect := tony.NewEndpointSelect(map[tony.Protocol]tony.Endpoint{
-		tony.IMAP: tony.NewEndpoint("mail.iqe.io", 143, tony.STARTTLS),
-		tony.SMTP: tony.NewEndpoint("mail.iqe.io", 587, tony.STARTTLS),
-	})
-	mailIqeIoIMAPLogin := tony.NewIMAPLogin(tony.NewEndpoint("mail.iqe.io", 993, tony.SSLOn))
-
-	throttler.AuthHandler = methodGate
-	methodGate.AuthHandler = looper
-	looper.AuthHandlers = []tony.AuthHandler{
-		mailIqeIoEndpointSelect,
-	}
-	mailIqeIoEndpointSelect.AuthHandler = mailIqeIoIMAPLogin
-
-	baseHandler := throttler
+	authHandler := t.NewThrottler(2, 16).With(
+		t.NewMethodGate(t.Plain).With(
+			t.NewLooper().With(
+				t.NewEndpointSelect(map[t.Protocol]t.Endpoint{
+					t.IMAP: t.NewEndpoint("mail.iqe.io", 143, t.STARTTLS),
+					t.SMTP: t.NewEndpoint("mail.iqe.io", 587, t.STARTTLS)}).With(
+					t.NewIMAPLogin(t.NewEndpoint("mail.iqe.io", 993, t.SSLOn))))))
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		authRequest := parseAuthRequest(r)
-		authResponse := baseHandler.Authenticate(authRequest)
+		authResponse := authHandler.Authenticate(authRequest)
 		writeAuthResponse(authResponse, w)
 
 		w.Header()["Date"] = nil // Remove default Date header
@@ -39,8 +29,8 @@ func main() {
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
-func parseAuthRequest(r *http.Request) tony.Request {
-	return tony.Request{
+func parseAuthRequest(r *http.Request) t.Request {
+	return t.Request{
 		AuthMethod:   parseAuthMethod(r.Header.Get("Auth-Method")),
 		AuthUser:     r.Header.Get("Auth-User"),
 		AuthPass:     r.Header.Get("Auth-Pass"),
@@ -49,33 +39,33 @@ func parseAuthRequest(r *http.Request) tony.Request {
 	}
 }
 
-func parseAuthMethod(m string) tony.Method {
+func parseAuthMethod(m string) t.Method {
 	switch m {
 	case "PLAIN", "LOGIN":
-		return tony.Plain
+		return t.Plain
 	case "CRAM-MD5":
-		return tony.CramMD5
+		return t.CramMD5
 	case "DIGEST-MD5":
-		return tony.DigestMD5
+		return t.DigestMD5
 	default:
-		return tony.OtherMethod
+		return t.OtherMethod
 	}
 }
 
-func parseAuthProtocol(p string) tony.Protocol {
+func parseAuthProtocol(p string) t.Protocol {
 	switch p {
 	case "smtp":
-		return tony.SMTP
+		return t.SMTP
 	case "imap":
-		return tony.IMAP
+		return t.IMAP
 	case "pop3":
-		return tony.POP3
+		return t.POP3
 	default:
-		return tony.OtherProtocol
+		return t.OtherProtocol
 	}
 }
 
-func writeAuthResponse(authResponse tony.Response, w http.ResponseWriter) {
+func writeAuthResponse(authResponse t.Response, w http.ResponseWriter) {
 	w.Header().Add("Auth-Status", authResponse.AuthStatus)
 	w.Header().Add("Auth-Server", authResponse.AuthServer)
 	w.Header().Add("Auth-Port", fmt.Sprintf("%d", authResponse.AuthPort))

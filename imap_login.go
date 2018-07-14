@@ -17,6 +17,10 @@ func NewIMAPLogin(endpoint Endpoint) *IMAPLogin {
 	}
 }
 
+func (h *IMAPLogin) With(next AuthHandler) AuthHandler {
+	return h
+}
+
 func (h *IMAPLogin) Authenticate(r Request) Response {
 	err := h.imapLogin(r.AuthUser, r.AuthPass)
 

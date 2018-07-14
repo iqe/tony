@@ -29,6 +29,11 @@ func NewThrottler(baseDelay int, maxDelay int) *Throttler {
 	}
 }
 
+func (t *Throttler) With(next AuthHandler) AuthHandler {
+	t.AuthHandler = next
+	return t
+}
+
 func (t *Throttler) Authenticate(request Request) Response {
 	response := t.AuthHandler.Authenticate(request)
 
