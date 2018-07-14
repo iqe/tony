@@ -17,10 +17,6 @@ func IMAPLogin(endpoint Endpoint) AuthHandler {
 	}
 }
 
-func (h *imapLogin) With(next AuthHandler) AuthHandler {
-	panic("imap login cannot be chained further")
-}
-
 func (h *imapLogin) Authenticate(r Request) Response {
 	err := h.imapLogin(r.AuthUser, r.AuthPass)
 

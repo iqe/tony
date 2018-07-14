@@ -28,16 +28,9 @@ func (h *testAuthHandler) Authenticate(r Request) Response {
 }
 
 func New(handlers []AuthHandler) AuthHandler {
-	looper := AnyOf()
-	for _, h := range handlers {
-		looper.With(h)
-	}
-
-	return RequestThrottling(2, 16).With(
-		AllowedMethods(Plain).With(
-			looper,
-		),
-	)
+	return RequestThrottling(2, 16,
+		AllowedMethods([]Method{Plain},
+			AnyOf(handlers...)))
 }
 
 func newTestAuthHandler(validPass string, server string, port int) *testAuthHandler {

@@ -33,13 +33,8 @@ type endpointSelect struct {
 	endpoints Endpoints
 }
 
-func EndpointSelection(endpoints Endpoints) AuthHandler {
-	return &endpointSelect{endpoints: endpoints}
-}
-
-func (h *endpointSelect) With(next AuthHandler) AuthHandler {
-	h.next = next
-	return h
+func EndpointSelection(endpoints Endpoints, next AuthHandler) AuthHandler {
+	return &endpointSelect{endpoints: endpoints, next: next}
 }
 
 func (h *endpointSelect) Authenticate(r Request) Response {

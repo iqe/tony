@@ -5,13 +5,8 @@ type methodGate struct {
 	allowedMethods []Method
 }
 
-func AllowedMethods(allowedMethods ...Method) AuthHandler {
-	return &methodGate{allowedMethods: allowedMethods}
-}
-
-func (m *methodGate) With(next AuthHandler) AuthHandler {
-	m.next = next
-	return m
+func AllowedMethods(allowedMethods []Method, next AuthHandler) AuthHandler {
+	return &methodGate{allowedMethods: allowedMethods, next: next}
 }
 
 func (m *methodGate) Authenticate(request Request) Response {

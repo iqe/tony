@@ -9,12 +9,12 @@ import (
 )
 
 func main() {
-	authHandler := t.RequestThrottling(2, 16).With(
-		t.AllowedMethods(t.Plain).With(
+	authHandler := t.RequestThrottling(2, 16,
+		t.AllowedMethods([]t.Method{t.Plain},
 			t.AnyOf(
 				t.EndpointSelection(map[t.Protocol]t.Endpoint{
 					t.IMAP: t.NewEndpoint("mail.iqe.io", 143, t.STARTTLS),
-					t.SMTP: t.NewEndpoint("mail.iqe.io", 587, t.STARTTLS)}).With(
+					t.SMTP: t.NewEndpoint("mail.iqe.io", 587, t.STARTTLS)},
 					t.IMAPLogin(t.NewEndpoint("mail.iqe.io", 993, t.SSLOn))))))
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

@@ -37,5 +37,4 @@ type Response struct {
 
 type AuthHandler interface {
 	Authenticate(Request) Response
-	With(next AuthHandler) AuthHandler
 }
