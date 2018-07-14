@@ -18,7 +18,7 @@ func (h *testAuthHandler) With(next AuthHandler) AuthHandler {
 func (h *testAuthHandler) Authenticate(r Request) Response {
 	if r.AuthPass == h.validPass {
 		return Response{
-			AuthStatus: AuthStatusOK,
+			AuthStatus: authStatusOK,
 			AuthServer: h.server,
 			AuthPort:   h.port,
 		}

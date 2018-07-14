@@ -31,7 +31,7 @@ func (h *imapLogin) Authenticate(r Request) Response {
 	}
 
 	return Response{
-		AuthStatus: AuthStatusOK,
+		AuthStatus: authStatusOK,
 	}
 }
 

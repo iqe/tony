@@ -26,7 +26,7 @@ const (
 	SMTP
 )
 
-const AuthStatusOK = "OK"
+const authStatusOK = "OK"
 
 type Response struct {
 	AuthStatus string

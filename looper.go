@@ -16,7 +16,7 @@ func (l *looper) With(next AuthHandler) AuthHandler {
 func (l *looper) Authenticate(request Request) Response {
 	for _, AuthHandler := range l.next {
 		response := AuthHandler.Authenticate(request)
-		if response.AuthStatus == AuthStatusOK {
+		if response.AuthStatus == authStatusOK {
 			return response
 		}
 	}

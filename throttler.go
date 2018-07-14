@@ -37,7 +37,7 @@ func (t *throttler) With(next AuthHandler) AuthHandler {
 func (t *throttler) Authenticate(request Request) Response {
 	response := t.next.Authenticate(request)
 
-	if response.AuthStatus == AuthStatusOK {
+	if response.AuthStatus == authStatusOK {
 		t.resetDelay(request.ClientIP)
 	} else {
 		delay := t.updateDelay(request.ClientIP)
