@@ -9,13 +9,13 @@ import (
 )
 
 func main() {
-	authHandler := t.NewThrottler(2, 16).With(
-		t.NewMethodGate(t.Plain).With(
-			t.NewLooper().With(
-				t.NewEndpointSelect(map[t.Protocol]t.Endpoint{
+	authHandler := t.RequestThrottling(2, 16).With(
+		t.AllowedMethods(t.Plain).With(
+			t.AnyOf().With(
+				t.EndpointSelection(map[t.Protocol]t.Endpoint{
 					t.IMAP: t.NewEndpoint("mail.iqe.io", 143, t.STARTTLS),
 					t.SMTP: t.NewEndpoint("mail.iqe.io", 587, t.STARTTLS)}).With(
-					t.NewIMAPLogin(t.NewEndpoint("mail.iqe.io", 993, t.SSLOn))))))
+					t.IMAPLogin(t.NewEndpoint("mail.iqe.io", 993, t.SSLOn))))))
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		authRequest := parseAuthRequest(r)

@@ -18,7 +18,7 @@ type throttler struct {
 
 var cacheNameCounter uint64
 
-func NewThrottler(baseDelay int, maxDelay int) AuthHandler {
+func RequestThrottling(baseDelay int, maxDelay int) AuthHandler {
 	atomic.AddUint64(&cacheNameCounter, 1)
 	cache := cache2go.Cache(fmt.Sprintf("delayCache-%v", cacheNameCounter))
 

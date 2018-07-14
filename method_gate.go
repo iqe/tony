@@ -5,7 +5,7 @@ type methodGate struct {
 	allowedMethods []Method
 }
 
-func NewMethodGate(allowedMethods ...Method) AuthHandler {
+func AllowedMethods(allowedMethods ...Method) AuthHandler {
 	return &methodGate{allowedMethods: allowedMethods}
 }
 

@@ -28,13 +28,13 @@ func (h *testAuthHandler) Authenticate(r Request) Response {
 }
 
 func New(handlers []AuthHandler) AuthHandler {
-	looper := NewLooper()
+	looper := AnyOf()
 	for _, h := range handlers {
 		looper.With(h)
 	}
 
-	return NewThrottler(2, 16).With(
-		NewMethodGate(Plain).With(
+	return RequestThrottling(2, 16).With(
+		AllowedMethods(Plain).With(
 			looper,
 		),
 	)

@@ -4,7 +4,7 @@ type looper struct {
 	next []AuthHandler
 }
 
-func NewLooper() AuthHandler {
+func AnyOf() AuthHandler {
 	return &looper{}
 }
 

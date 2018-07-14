@@ -11,7 +11,7 @@ type imapLogin struct {
 	Endpoint
 }
 
-func NewIMAPLogin(endpoint Endpoint) AuthHandler {
+func IMAPLogin(endpoint Endpoint) AuthHandler {
 	return &imapLogin{
 		Endpoint: endpoint,
 	}
