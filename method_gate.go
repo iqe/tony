@@ -1,20 +1,20 @@
 package tony
 
-type MethodGate struct {
+type methodGate struct {
 	next           AuthHandler
 	allowedMethods []Method
 }
 
-func NewMethodGate(allowedMethods ...Method) *MethodGate {
-	return &MethodGate{allowedMethods: allowedMethods}
+func NewMethodGate(allowedMethods ...Method) AuthHandler {
+	return &methodGate{allowedMethods: allowedMethods}
 }
 
-func (m *MethodGate) With(next AuthHandler) AuthHandler {
+func (m *methodGate) With(next AuthHandler) AuthHandler {
 	m.next = next
 	return m
 }
 
-func (m *MethodGate) Authenticate(request Request) Response {
+func (m *methodGate) Authenticate(request Request) Response {
 	for _, method := range m.allowedMethods {
 		if request.AuthMethod == method {
 			return m.next.Authenticate(request)

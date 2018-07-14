@@ -9,7 +9,7 @@ import (
 	"github.com/muesli/cache2go"
 )
 
-type Throttler struct {
+type throttler struct {
 	next       AuthHandler
 	delayCache *cache2go.CacheTable
 	baseDelay  int
@@ -18,23 +18,23 @@ type Throttler struct {
 
 var cacheNameCounter uint64
 
-func NewThrottler(baseDelay int, maxDelay int) *Throttler {
+func NewThrottler(baseDelay int, maxDelay int) AuthHandler {
 	atomic.AddUint64(&cacheNameCounter, 1)
 	cache := cache2go.Cache(fmt.Sprintf("delayCache-%v", cacheNameCounter))
 
-	return &Throttler{
+	return &throttler{
 		delayCache: cache,
 		baseDelay:  baseDelay,
 		maxDelay:   maxDelay,
 	}
 }
 
-func (t *Throttler) With(next AuthHandler) AuthHandler {
+func (t *throttler) With(next AuthHandler) AuthHandler {
 	t.next = next
 	return t
 }
 
-func (t *Throttler) Authenticate(request Request) Response {
+func (t *throttler) Authenticate(request Request) Response {
 	response := t.next.Authenticate(request)
 
 	if response.AuthStatus == AuthStatusOK {
@@ -47,7 +47,7 @@ func (t *Throttler) Authenticate(request Request) Response {
 	return response
 }
 
-func (t *Throttler) updateDelay(key string) int {
+func (t *throttler) updateDelay(key string) int {
 	delay := t.baseDelay
 
 	res, err := t.delayCache.Value(key)
@@ -61,6 +61,6 @@ func (t *Throttler) updateDelay(key string) int {
 	return delay
 }
 
-func (t *Throttler) resetDelay(key string) {
+func (t *throttler) resetDelay(key string) {
 	t.delayCache.Delete(key)
 }

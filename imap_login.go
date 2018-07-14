@@ -7,21 +7,21 @@ import (
 	"github.com/emersion/go-imap/client"
 )
 
-type IMAPLogin struct {
+type imapLogin struct {
 	Endpoint
 }
 
-func NewIMAPLogin(endpoint Endpoint) *IMAPLogin {
-	return &IMAPLogin{
+func NewIMAPLogin(endpoint Endpoint) AuthHandler {
+	return &imapLogin{
 		Endpoint: endpoint,
 	}
 }
 
-func (h *IMAPLogin) With(next AuthHandler) AuthHandler {
+func (h *imapLogin) With(next AuthHandler) AuthHandler {
 	panic("imap login cannot be chained further")
 }
 
-func (h *IMAPLogin) Authenticate(r Request) Response {
+func (h *imapLogin) Authenticate(r Request) Response {
 	err := h.imapLogin(r.AuthUser, r.AuthPass)
 
 	if err != nil {
@@ -35,7 +35,7 @@ func (h *IMAPLogin) Authenticate(r Request) Response {
 	}
 }
 
-func (h *IMAPLogin) imapLogin(username string, password string) error {
+func (h *imapLogin) imapLogin(username string, password string) error {
 	var err error
 	var c *client.Client
 
