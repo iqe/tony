@@ -13,16 +13,16 @@ const (
 )
 
 type Endpoint struct {
-	Server string
-	Port   int
-	SSL    SSL
+	server string
+	port   int
+	ssl    SSL
 }
 
 func NewEndpoint(server string, port int, ssl SSL) Endpoint {
 	return Endpoint{
-		Server: server,
-		Port:   port,
-		SSL:    ssl,
+		server: server,
+		port:   port,
+		ssl:    ssl,
 	}
 }
 
@@ -42,8 +42,8 @@ func (h *endpointSelectionHandler) Authenticate(r Request) Response {
 
 	endpoint, ok := h.endpoints[r.AuthProtocol]
 	if ok {
-		response.AuthServer = endpoint.Server
-		response.AuthPort = endpoint.Port
+		response.AuthServer = endpoint.server
+		response.AuthPort = endpoint.port
 		return response
 	}
 

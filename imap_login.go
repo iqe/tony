@@ -35,21 +35,21 @@ func (h *imapLoginHandler) imapLogin(username string, password string) error {
 	var err error
 	var c *client.Client
 
-	if h.SSL == SSLOn {
-		c, err = client.DialTLS(fmt.Sprintf("%s:%d", h.Server, h.Port), &tls.Config{
-			ServerName: h.Server,
+	if h.ssl == SSLOn {
+		c, err = client.DialTLS(fmt.Sprintf("%s:%d", h.server, h.port), &tls.Config{
+			ServerName: h.server,
 		})
 		if err != nil {
 			return err
 		}
 	} else {
-		c, err = client.Dial(fmt.Sprintf("%s:%d", h.Server, h.Port))
+		c, err = client.Dial(fmt.Sprintf("%s:%d", h.server, h.port))
 		if err != nil {
 			return err
 		}
-		if h.SSL == STARTTLS {
+		if h.ssl == STARTTLS {
 			err = c.StartTLS(&tls.Config{
-				ServerName: h.Server,
+				ServerName: h.server,
 			})
 			if err != nil {
 				return err
