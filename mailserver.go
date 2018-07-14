@@ -33,7 +33,7 @@ type endpointSelectionHandler struct {
 	endpoints Endpoints
 }
 
-func EndpointSelection(endpoints Endpoints, next AuthHandler) AuthHandler {
+func Mailserver(endpoints Endpoints, next AuthHandler) AuthHandler {
 	return &endpointSelectionHandler{endpoints: endpoints, next: next}
 }
 
