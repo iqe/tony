@@ -10,10 +10,10 @@ import (
 )
 
 type Throttler struct {
-	AuthHandler AuthHandler
-	delayCache  *cache2go.CacheTable
-	baseDelay   int
-	maxDelay    int
+	next       AuthHandler
+	delayCache *cache2go.CacheTable
+	baseDelay  int
+	maxDelay   int
 }
 
 var cacheNameCounter uint64
@@ -30,12 +30,12 @@ func NewThrottler(baseDelay int, maxDelay int) *Throttler {
 }
 
 func (t *Throttler) With(next AuthHandler) AuthHandler {
-	t.AuthHandler = next
+	t.next = next
 	return t
 }
 
 func (t *Throttler) Authenticate(request Request) Response {
-	response := t.AuthHandler.Authenticate(request)
+	response := t.next.Authenticate(request)
 
 	if response.AuthStatus == AuthStatusOK {
 		t.resetDelay(request.ClientIP)

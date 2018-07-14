@@ -1,7 +1,7 @@
 package tony
 
 type Looper struct {
-	AuthHandlers []AuthHandler
+	next []AuthHandler
 }
 
 func NewLooper() *Looper {
@@ -9,12 +9,12 @@ func NewLooper() *Looper {
 }
 
 func (l *Looper) With(next AuthHandler) AuthHandler {
-	l.AuthHandlers = append(l.AuthHandlers, next)
+	l.next = append(l.next, next)
 	return l
 }
 
 func (l *Looper) Authenticate(request Request) Response {
-	for _, AuthHandler := range l.AuthHandlers {
+	for _, AuthHandler := range l.next {
 		response := AuthHandler.Authenticate(request)
 		if response.AuthStatus == AuthStatusOK {
 			return response

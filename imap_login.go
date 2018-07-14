@@ -18,7 +18,7 @@ func NewIMAPLogin(endpoint Endpoint) *IMAPLogin {
 }
 
 func (h *IMAPLogin) With(next AuthHandler) AuthHandler {
-	return h
+	panic("imap login cannot be chained further")
 }
 
 func (h *IMAPLogin) Authenticate(r Request) Response {

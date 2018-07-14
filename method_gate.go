@@ -1,7 +1,7 @@
 package tony
 
 type MethodGate struct {
-	AuthHandler    AuthHandler
+	next           AuthHandler
 	allowedMethods []Method
 }
 
@@ -10,14 +10,14 @@ func NewMethodGate(allowedMethods ...Method) *MethodGate {
 }
 
 func (m *MethodGate) With(next AuthHandler) AuthHandler {
-	m.AuthHandler = next
+	m.next = next
 	return m
 }
 
 func (m *MethodGate) Authenticate(request Request) Response {
 	for _, method := range m.allowedMethods {
 		if request.AuthMethod == method {
-			return m.AuthHandler.Authenticate(request)
+			return m.next.Authenticate(request)
 		}
 	}
 

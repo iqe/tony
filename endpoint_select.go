@@ -29,8 +29,8 @@ func NewEndpoint(server string, port int, ssl SSL) Endpoint {
 type Endpoints map[Protocol]Endpoint
 
 type EndpointSelect struct {
-	AuthHandler AuthHandler
-	Endpoints   Endpoints
+	next      AuthHandler
+	Endpoints Endpoints
 }
 
 func NewEndpointSelect(endpoints Endpoints) *EndpointSelect {
@@ -38,12 +38,12 @@ func NewEndpointSelect(endpoints Endpoints) *EndpointSelect {
 }
 
 func (h *EndpointSelect) With(next AuthHandler) AuthHandler {
-	h.AuthHandler = next
+	h.next = next
 	return h
 }
 
 func (h *EndpointSelect) Authenticate(r Request) Response {
-	response := h.AuthHandler.Authenticate(r)
+	response := h.next.Authenticate(r)
 
 	endpoint, ok := h.Endpoints[r.AuthProtocol]
 	if ok {
