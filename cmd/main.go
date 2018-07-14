@@ -9,7 +9,39 @@ import (
 )
 
 func main() {
+
+	// Example config for webflow mail proxy
+
+	communigate := t.Mailserver(
+		t.Endpoints{
+			t.IMAP: t.NewEndpoint("localhost", 1143, t.SSLOff),
+			t.POP3: t.NewEndpoint("localhost", 1110, t.SSLOff),
+			t.SMTP: t.NewEndpoint("localhost", 1025, t.SSLOff),
+		},
+		t.Frankie("http://localhost:19000",
+			t.IMAPLogin(t.NewEndpoint("localhost", 1143, t.SSLOff)),
+		),
+	)
+
+	mailserver4 := t.Mailserver(
+		t.Endpoints{
+			t.IMAP: t.NewEndpoint("localhost", 4143, t.SSLOff),
+			t.POP3: t.NewEndpoint("localhost", 4110, t.SSLOff),
+			t.SMTP: t.NewEndpoint("localhost", 4025, t.SSLOff),
+		},
+		t.IMAPLogin(t.NewEndpoint("localhost", 4143, t.SSLOff)),
+	)
+
 	authHandler := t.RequestThrottling(2, 16,
+		t.AnyOf(
+			t.AllowedMethods([]t.Method{t.Plain}, mailserver4),
+			t.AllowedMethods([]t.Method{t.Plain, t.CramMD5}, communigate),
+		),
+	)
+
+	// Overwrites the above config!
+
+	authHandler = t.RequestThrottling(2, 16,
 		t.AllowedMethods([]t.Method{t.Plain},
 			t.AnyOf(
 				t.Mailserver(
